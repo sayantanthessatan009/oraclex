@@ -65,11 +65,21 @@
 <script type="text/babel">
 const {useState,useEffect,useRef,useCallback,createContext,useContext} = React;
 
-const ApiCtx = createContext("http://localhost:8000");
+const NGROK_BASE = "https://lenitic-unmaidenlike-gael.ngrok-free.dev";
+
+const ApiCtx = createContext(NGROK_BASE);
 const useBase = () => useContext(ApiCtx);
 
+// Central fetch wrapper — injects ngrok header on every request
 async function api(base, path, opts={}) {
-  const r = await fetch(`${base}${path}`, {headers:{"Content-Type":"application/json"},...opts});
+  const r = await fetch(`${base}${path}`, {
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+      ...(opts.headers || {}),
+    },
+    ...opts,
+  });
   if (!r.ok) { const t=await r.text().catch(()=>""); throw new Error(`${r.status} ${t.slice(0,100)}`); }
   return r.json();
 }
@@ -133,7 +143,10 @@ function ConfigBar({base,setBase}){
   const check=useCallback(async(url)=>{
     setSt("checking");setMsg("");
     try{
-      const r=await fetch(`${url}/health`,{signal:AbortSignal.timeout(5000)});
+      const r=await fetch(`${url}/health`,{
+        signal:AbortSignal.timeout(5000),
+        headers:{"ngrok-skip-browser-warning":"true"},
+      });
       const d=await r.json().catch(()=>({}));
       if(r.ok){setSt("ok");setMsg(`v${d.version||"?"} · Groq ${d.groq_connected?"✓":"✗"} · DB ${d.supabase_connected?"✓":"✗"}`);}
       else{setSt("error");setMsg(`HTTP ${r.status}`);}
@@ -237,10 +250,11 @@ function PredModal({game,onClose}){
     return()=>esRef.current?.close();
   },[game.id,base]);
 
+  // EventSource doesn't support custom headers — append as query param instead
   const stream=()=>{
     esRef.current?.close();
     setPhase("connecting");setNarr("");setMeta(null);setMsg("Consulting the oracle…");
-    const es=new EventSource(`${base}/api/v1/predictions/stream/${game.id}`);
+    const es=new EventSource(`${base}/api/v1/predictions/stream/${game.id}?ngrok-skip-browser-warning=true`);
     esRef.current=es;
     es.addEventListener("status",e=>{setPhase("streaming");setMsg(e.data);});
     es.addEventListener("narrative",e=>{
@@ -645,7 +659,7 @@ function Accuracy(){
 }
 
 function App(){
-  const stored=(()=>{try{return localStorage.getItem("oraclex_api")||"http://localhost:8000";}catch{return "http://localhost:8000";}})();
+  const stored=(()=>{try{return localStorage.getItem("oraclex_api")||NGROK_BASE;}catch{return NGROK_BASE;}})();
   const [base,setBaseRaw]=useState(stored);
   const [page,setPage]=useState("dashboard");
   const [game,setGame]=useState(null);
