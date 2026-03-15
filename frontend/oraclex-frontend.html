@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OracleX — The Story Before It Happens</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#06080f;--surface:#0d1117;--surface2:#131a24;--surface3:#1a2333;
+      --border:#1e2d42;--gold:#f59e0b;--gold-dim:#b45309;
+      --text:#e8dcc8;--text-dim:#8a9ab5;--text-muted:#4a5568;
+      --red:#ef4444;--green:#22c55e;
+      --font-display:'Cinzel',serif;--font-body:'Crimson Pro',serif;--font-mono:'JetBrains Mono',monospace;
+    }
+    html,body,#root{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:16px;line-height:1.6}
+    ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+    @keyframes orb{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+    @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+    .fade-in{animation:fadeIn .35s ease forwards}
+    .fade-delay{animation:fadeIn .35s ease forwards;animation-fill-mode:both}
+    .skeleton{background:linear-gradient(90deg,var(--surface2) 25%,var(--surface3) 50%,var(--surface2) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px}
+    .cursor::after{content:'|';animation:blink .8s step-end infinite;color:var(--gold);font-style:normal}
+    .pulse{animation:pulse 1.4s ease-in-out infinite}
+    .btn{font-family:var(--font-display);font-size:10px;letter-spacing:.12em;font-weight:600;padding:9px 18px;border-radius:3px;cursor:pointer;border:none;transition:all .18s;text-transform:uppercase}
+    .btn-gold{background:var(--gold);color:#050505}
+    .btn-gold:hover{background:#fbbf24;transform:translateY(-1px);box-shadow:0 4px 16px rgba(245,158,11,.35)}
+    .btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
+    .btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold)}
+    .btn-ghost.on{border-color:var(--gold);color:var(--gold);background:rgba(245,158,11,.05)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:4px;transition:border-color .2s,box-shadow .2s}
+    .card:hover{border-color:var(--gold-dim);box-shadow:0 0 20px rgba(245,158,11,.07)}
+    .tag{font-family:var(--font-mono);font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;font-weight:500;text-transform:uppercase;display:inline-block}
+    .divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0}
+    nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(6,8,15,.92);border-bottom:1px solid var(--border)}
+    .orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;opacity:.2;animation:orb 9s ease-in-out infinite}
+    .modal-bg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:6px;width:100%;max-width:740px;max-height:92vh;overflow-y:auto}
+    .conf-ring{transform:rotate(-90deg)}
+    .narrative{font-family:var(--font-body);font-size:17px;line-height:1.88;font-style:italic;color:var(--text);letter-spacing:.01em;white-space:pre-wrap}
+    .config-bar{background:rgba(245,158,11,.06);border-bottom:1px solid rgba(245,158,11,.18);padding:8px 22px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+    .config-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;border-radius:3px;outline:none;flex:1;min-width:220px;transition:border-color .2s}
+    .config-input:focus{border-color:var(--gold-dim)}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    @media(max-width:768px){
+      .hide-sm{display:none!important}
+      .grid-2{grid-template-columns:1fr!important}
+      .grid-4{grid-template-columns:1fr 1fr!important}
+    }
+    @media(min-width:769px){.hide-lg{display:none!important}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback,createContext,useContext} = React;
+
+const ApiCtx = createContext("http://localhost:8000");
+const useBase = () => useContext(ApiCtx);
+
+async function api(base, path, opts={}) {
+  const r = await fetch(`${base}${path}`, {headers:{"Content-Type":"application/json"},...opts});
+  if (!r.ok) { const t=await r.text().catch(()=>""); throw new Error(`${r.status} ${t.slice(0,100)}`); }
+  return r.json();
+}
+
+const SL = {
+  americanfootball_nfl:"NFL",basketball_nba:"NBA",icehockey_nhl:"NHL",
+  baseball_mlb:"MLB",mma_mixed_martial_arts:"UFC",soccer_epl:"EPL",
+  americanfootball_ncaaf:"NCAAF",basketball_ncaab:"NCAAB",
+};
+const SE = {
+  americanfootball_nfl:"🏈",basketball_nba:"🏀",icehockey_nhl:"🏒",
+  baseball_mlb:"⚾",mma_mixed_martial_arts:"🥊",soccer_epl:"⚽",
+  americanfootball_ncaaf:"🏈",basketball_ncaab:"🏀",
+};
+
+const fmtO = v => v==null?"—":v>0?`+${v}`:`${v}`;
+const fmtT = iso => !iso?"":new Date(iso).toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});
+const tier = c => c>=.75?{c:"#f59e0b"}:c>=.60?{c:"#a3a3a3"}:{c:"#6b7280"};
+
+function Ring({value=.5,size=68}){
+  const r=(size-10)/2,ci=2*Math.PI*r,off=ci*(1-value);
+  const {c}=tier(value);
+  return(
+    <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
+      <svg width={size} height={size} className="conf-ring">
+        <circle cx={size/2} cy={size/2} r={r} stroke="var(--surface3)" strokeWidth={3} fill="none"/>
+        <circle cx={size/2} cy={size/2} r={r} stroke={c} strokeWidth={3} fill="none"
+          strokeDasharray={ci} strokeDashoffset={off} strokeLinecap="round"
+          style={{transition:"stroke-dashoffset .7s ease"}}/>
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <span style={{fontFamily:"var(--font-mono)",fontSize:size<52?9:12,fontWeight:600,color:c}}>{Math.round(value*100)}%</span>
+      </div>
+    </div>
+  );
+}
+
+function SentBars({hs=0,as=0,ht,at}){
+  const b=s=>({p:((s+1)/2)*100,c:s>.2?"#f59e0b":s<-.2?"#6b7280":"#a3a3a3"});
+  return(
+    <div>
+      <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".06em",marginBottom:7,textTransform:"uppercase"}}>Fan Pulse</div>
+      {[[ht?.split(" ").pop()||"Home",b(hs),hs],[at?.split(" ").pop()||"Away",b(as),as]].map(([n,bv,raw],i)=>(
+        <div key={i} style={{display:"flex",gap:7,alignItems:"center",marginBottom:i===0?3:0}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",minWidth:34,textAlign:"right"}}>{n}</span>
+          <div style={{flex:1,height:3,background:"var(--surface3)",borderRadius:2,overflow:"hidden"}}>
+            <div style={{height:"100%",width:`${bv.p}%`,background:bv.c,borderRadius:2,transition:"width .8s ease"}}/>
+          </div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:bv.c,minWidth:24}}>{(raw*100).toFixed(0)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ConfigBar({base,setBase}){
+  const [inp,setInp]=useState(base);
+  const [st,setSt]=useState("unknown");
+  const [msg,setMsg]=useState("");
+
+  const check=useCallback(async(url)=>{
+    setSt("checking");setMsg("");
+    try{
+      const r=await fetch(`${url}/health`,{signal:AbortSignal.timeout(5000)});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok){setSt("ok");setMsg(`v${d.version||"?"} · Groq ${d.groq_connected?"✓":"✗"} · DB ${d.supabase_connected?"✓":"✗"}`);}
+      else{setSt("error");setMsg(`HTTP ${r.status}`);}
+    }catch(e){
+      setSt("error");
+      setMsg(e.message.includes("Failed to fetch")||e.message.includes("NetworkError")
+        ?"Cannot reach server — check URL & CORS":e.message.slice(0,70));
+    }
+  },[]);
+
+  useEffect(()=>{check(base);},[]);
+
+  const save=()=>{const u=inp.replace(/\/$/,"");setBase(u);check(u);};
+  const dotC={ok:"#22c55e",error:"#ef4444",checking:"#f59e0b",unknown:"#4a5568"}[st];
+
+  return(
+    <div className="config-bar">
+      <div className="dot" style={{background:dotC,boxShadow:`0 0 5px ${dotC}`}}/>
+      <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".06em",flexShrink:0}}>API BASE</span>
+      <input className="config-input" value={inp} onChange={e=>setInp(e.target.value)}
+        onKeyDown={e=>e.key==="Enter"&&save()}
+        placeholder="https://your-app.railway.app  or  http://localhost:8000" spellCheck={false}/>
+      <button className="btn btn-ghost" onClick={save} style={{padding:"5px 13px",fontSize:9,flexShrink:0}}>
+        {st==="checking"?"…":"Connect"}
+      </button>
+      {msg&&<span style={{fontFamily:"var(--font-mono)",fontSize:9,color:st==="ok"?"var(--green)":"var(--red)"}}>{msg}</span>}
+    </div>
+  );
+}
+
+function GameCard({game,onSelect,compact=false}){
+  const isLive=game.status==="live",isFinal=game.status==="final";
+  return(
+    <div className="card fade-in" onClick={()=>onSelect(game)} style={{padding:compact?"12px 14px":"18px 20px",cursor:"pointer"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9,flexWrap:"wrap",gap:3}}>
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          <span style={{fontSize:12}}>{SE[game.sport]||"🏆"}</span>
+          <span className="tag" style={{background:"var(--surface2)",color:"var(--text-dim)"}}>{SL[game.sport]||game.sport}</span>
+          {isLive&&<span className="tag" style={{background:"rgba(239,68,68,.15)",color:"var(--red)"}}>● LIVE</span>}
+          {isFinal&&<span className="tag" style={{background:"var(--surface2)",color:"var(--text-muted)"}}>FINAL</span>}
+        </div>
+        <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>{fmtT(game.game_time).split(",")[0]}</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:9}}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"var(--font-display)",fontSize:compact?12:14,fontWeight:600,letterSpacing:".04em"}}>{game.home_team}</div>
+          <div style={{fontFamily:"var(--font-display)",fontSize:compact?11:13,fontWeight:400,letterSpacing:".04em",color:"var(--text-dim)",marginTop:2}}>{game.away_team}</div>
+        </div>
+        {game.home_score!=null&&(
+          <div style={{textAlign:"right"}}>
+            <div style={{fontFamily:"var(--font-mono)",fontSize:16,fontWeight:500}}>{game.home_score}</div>
+            <div style={{fontFamily:"var(--font-mono)",fontSize:16,fontWeight:500,color:"var(--text-dim)"}}>{game.away_score??"-"}</div>
+          </div>
+        )}
+      </div>
+      {game.predicted_winner&&<>
+        <div className="divider"/>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:".05em"}}>Oracle picks</span>
+            <span style={{fontFamily:"var(--font-display)",fontSize:11,color:"var(--gold)",letterSpacing:".06em"}}>{game.predicted_winner}</span>
+          </div>
+          {game.confidence&&<Ring value={game.confidence} size={36}/>}
+        </div>
+      </>}
+      {!game.predicted_winner&&!compact&&<>
+        <div className="divider"/>
+        <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--gold-dim)",letterSpacing:".06em",textTransform:"uppercase"}}>◈ Click to invoke oracle</div>
+      </>}
+    </div>
+  );
+}
+
+function PredModal({game,onClose}){
+  const base=useBase();
+  const [phase,setPhase]=useState("idle");
+  const [narr,setNarr]=useState("");
+  const [meta,setMeta]=useState(null);
+  const [msg,setMsg]=useState("");
+  const [odds,setOdds]=useState(null);
+  const [sent,setSent]=useState(null);
+  const esRef=useRef(null);
+  const endRef=useRef(null);
+
+  useEffect(()=>{
+    Promise.allSettled([
+      api(base,`/api/v1/odds/live/${game.id}`),
+      api(base,`/api/v1/sentiment/${game.id}`),
+    ]).then(([o,s])=>{
+      if(o.status==="fulfilled")setOdds(o.value);
+      if(s.status==="fulfilled")setSent(s.value);
+    });
+    api(base,`/api/v1/predictions/${game.id}`)
+      .then(d=>{
+        if(d?.narrative){
+          setNarr(d.narrative);
+          setMeta({predicted_winner:d.predicted_winner,confidence:d.confidence,key_factors:d.key_factors||[],upset_watch:d.upset_watch,bet_recommendation:d.bet_recommendation});
+          setPhase("done");
+        }
+      }).catch(()=>{});
+    return()=>esRef.current?.close();
+  },[game.id,base]);
+
+  const stream=()=>{
+    esRef.current?.close();
+    setPhase("connecting");setNarr("");setMeta(null);setMsg("Consulting the oracle…");
+    const es=new EventSource(`${base}/api/v1/predictions/stream/${game.id}`);
+    esRef.current=es;
+    es.addEventListener("status",e=>{setPhase("streaming");setMsg(e.data);});
+    es.addEventListener("narrative",e=>{
+      setNarr(p=>p+e.data);
+      setTimeout(()=>endRef.current?.scrollIntoView({behavior:"smooth"}),40);
+    });
+    es.addEventListener("metadata",e=>{try{setMeta(JSON.parse(e.data));}catch{}});
+    es.addEventListener("done",()=>{setPhase("done");es.close();});
+    es.addEventListener("error",e=>{setPhase("error");setMsg(e.data||"Stream error");es.close();});
+    es.onerror=()=>{if(phase!=="done"){setPhase("error");setMsg("Connection lost");es.close();}};
+  };
+
+  return(
+    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal fade-in">
+        <div style={{padding:"16px 20px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"flex-start",position:"sticky",top:0,background:"var(--surface)",zIndex:10}}>
+          <div>
+            <div style={{display:"flex",gap:4,alignItems:"center",marginBottom:4,flexWrap:"wrap"}}>
+              <span className="tag" style={{background:"var(--surface2)",color:"var(--text-dim)"}}>{SE[game.sport]} {SL[game.sport]||game.sport}</span>
+              {game.status==="live"&&<span className="tag" style={{background:"rgba(239,68,68,.15)",color:"var(--red)"}}>● LIVE</span>}
+            </div>
+            <h2 style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,letterSpacing:".05em"}}>{game.home_team} <span style={{color:"var(--text-muted)",fontWeight:400}}>vs</span> {game.away_team}</h2>
+            <p style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",marginTop:3}}>{fmtT(game.game_time)}</p>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:22,lineHeight:1,padding:4}}>✕</button>
+        </div>
+
+        <div style={{padding:"16px 20px"}}>
+          {(odds||sent)&&(
+            <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap"}}>
+              {odds&&(
+                <div style={{flex:2,minWidth:190}}>
+                  <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".06em",marginBottom:6,textTransform:"uppercase"}}>Lines</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {[
+                      {l:game.home_team.split(" ").pop(),v:fmtO(odds.best_home_odds),c:"var(--gold)"},
+                      {l:game.away_team.split(" ").pop(),v:fmtO(odds.best_away_odds),c:"var(--text-dim)"},
+                      odds.consensus_spread!=null&&{l:"Spread",v:`${odds.consensus_spread>0?"+":""}${odds.consensus_spread}`,c:"var(--text)"},
+                      odds.consensus_over_under!=null&&{l:"O/U",v:odds.consensus_over_under,c:"var(--text)"},
+                    ].filter(Boolean).map((it,i)=>(
+                      <div key={i} style={{padding:"6px 10px",background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:2,flex:1,minWidth:55}}>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>{it.l}</div>
+                        <div style={{fontFamily:"var(--font-mono)",fontSize:14,color:it.c,marginTop:1}}>{it.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {sent&&(
+                <div style={{flex:1,minWidth:160,padding:"10px 12px",background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:2}}>
+                  <SentBars hs={sent.home?.score} as={sent.away?.score} ht={game.home_team} at={game.away_team}/>
+                </div>
+              )}
+            </div>
+          )}
+
+          {phase==="idle"&&(
+            <div style={{textAlign:"center",padding:"28px 0"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:11,color:"var(--text-dim)",letterSpacing:".12em",textTransform:"uppercase",marginBottom:16}}>The oracle awaits your query</div>
+              <button className="btn btn-gold" onClick={stream} style={{padding:"11px 30px"}}>◈ Invoke Oracle</button>
+            </div>
+          )}
+          {phase==="connecting"&&<div style={{textAlign:"center",padding:"24px 0",fontFamily:"var(--font-mono)",fontSize:11,color:"var(--gold)",letterSpacing:".08em"}} className="pulse">{msg}</div>}
+
+          {(phase==="streaming"||phase==="done")&&narr&&(
+            <div>
+              {phase==="streaming"&&<div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--gold)",letterSpacing:".08em",marginBottom:9,textTransform:"uppercase"}} className="pulse">◈ {msg||"Narrating…"}</div>}
+              <div style={{width:32,height:2,background:"var(--gold)",marginBottom:12}}/>
+              <p className={`narrative${phase==="streaming"?" cursor":""}`}>{narr}</p>
+              <div ref={endRef}/>
+              {meta&&phase==="done"&&(
+                <div style={{marginTop:22}}>
+                  <div className="divider"/>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                    <div>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:3}}>Oracle's Pick</div>
+                      <div style={{fontFamily:"var(--font-display)",fontSize:20,fontWeight:700,letterSpacing:".08em",color:"var(--gold)"}}>{meta.predicted_winner}</div>
+                    </div>
+                    <Ring value={meta.confidence} size={72}/>
+                  </div>
+                  {meta.key_factors?.length>0&&(
+                    <div style={{marginBottom:12}}>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:7}}>Key Factors</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                        {meta.key_factors.map((f,i)=>(
+                          <div key={i} style={{display:"flex",gap:9,padding:"8px 11px",background:"var(--surface2)",border:"1px solid var(--border)",borderRadius:2}}>
+                            <span className="tag" style={{background:f.weight==="high"?"rgba(245,158,11,.14)":"var(--surface3)",color:f.weight==="high"?"var(--gold)":"var(--text-muted)",flexShrink:0}}>{f.weight||"med"}</span>
+                            <div>
+                              <div style={{fontFamily:"var(--font-body)",fontSize:13,fontWeight:600,marginBottom:1}}>{f.factor}</div>
+                              <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--text-dim)"}}>{f.detail}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {meta.upset_watch&&(
+                    <div style={{padding:"10px 13px",background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.2)",borderRadius:2,marginBottom:9}}>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--red)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:3}}>⚠ Upset Watch</div>
+                      <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--text-dim)"}}>{meta.upset_watch}</p>
+                    </div>
+                  )}
+                  {meta.bet_recommendation&&(
+                    <div style={{padding:"10px 13px",background:"rgba(245,158,11,.05)",border:"1px solid rgba(245,158,11,.17)",borderRadius:2,marginBottom:12}}>
+                      <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--gold-dim)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:3}}>◈ Bet Recommendation</div>
+                      <p style={{fontFamily:"var(--font-body)",fontSize:13,color:"var(--text)"}}>{meta.bet_recommendation}</p>
+                    </div>
+                  )}
+                  <p style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",lineHeight:1.7}}>Entertainment only · Not financial advice · Gamble responsibly</p>
+                  <button className="btn btn-ghost" onClick={stream} style={{marginTop:12,fontSize:9}}>↺ Re-run</button>
+                </div>
+              )}
+            </div>
+          )}
+          {phase==="error"&&(
+            <div style={{padding:"13px 16px",background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.22)",borderRadius:2}}>
+              <div style={{fontFamily:"var(--font-mono)",fontSize:11,color:"var(--red)",marginBottom:6}}>⚠ {msg}</div>
+              <button className="btn btn-ghost" onClick={stream} style={{fontSize:9}}>↺ Retry</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AppNav({page,setPage,health}){
+  const [open,setOpen]=useState(false);
+  const items=[["dashboard","Dashboard"],["games","Games"],["predictions","Predictions"],["accuracy","Stats"]];
+  return(
+    <nav>
+      <div style={{maxWidth:1200,margin:"0 auto",padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"space-between",height:54}}>
+        <button onClick={()=>setPage("dashboard")} style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:26,height:26,borderRadius:"50%",border:"1.5px solid var(--gold)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{fontFamily:"var(--font-display)",fontSize:11,color:"var(--gold)"}}>◈</span>
+          </div>
+          <span style={{fontFamily:"var(--font-display)",fontSize:13,fontWeight:700,letterSpacing:".12em"}}>ORACLE<span style={{color:"var(--gold)"}}>X</span></span>
+        </button>
+        <div style={{display:"flex",gap:2}} className="hide-sm">
+          {items.map(([id,l])=>(<button key={id} className={`btn btn-ghost ${page===id?"on":""}`} onClick={()=>setPage(id)} style={{padding:"5px 11px",fontSize:9}}>{l}</button>))}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:9}}>
+          {health&&<div style={{display:"flex",alignItems:"center",gap:4}} className="hide-sm">
+            <div style={{width:5,height:5,borderRadius:"50%",background:health.groq_connected?"var(--green)":"var(--red)"}}/>
+            <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>{health.groq_connected?"LIVE":"OFFLINE"}</span>
+          </div>}
+          <button className="hide-lg" onClick={()=>setOpen(!open)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--text-dim)",fontSize:18}}>☰</button>
+        </div>
+      </div>
+      {open&&<div style={{borderTop:"1px solid var(--border)",padding:"7px 20px",display:"flex",flexDirection:"column",gap:3}}>
+        {items.map(([id,l])=>(<button key={id} className={`btn btn-ghost ${page===id?"on":""}`} onClick={()=>{setPage(id);setOpen(false);}} style={{textAlign:"left"}}>{l}</button>))}
+      </div>}
+    </nav>
+  );
+}
+
+const Skels=({n=4,h=130,cols=2})=>(
+  <div style={{display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:10}} className="grid-2">
+    {[...Array(n)].map((_,i)=><div key={i} className="skeleton" style={{height:h}}/>)}
+  </div>
+);
+
+const ErrBox=({msg})=>(
+  <div style={{padding:"16px 18px",background:"rgba(239,68,68,.06)",border:"1px solid rgba(239,68,68,.2)",borderRadius:4,fontFamily:"var(--font-mono)",fontSize:11,color:"var(--red)"}}>
+    ⚠ {msg}
+    <br/><span style={{color:"var(--text-muted)",fontSize:9,lineHeight:1.8}}>Check: backend running · API Base correct above · CORS allows this origin</span>
+  </div>
+);
+
+function Dashboard({setPage,setGame}){
+  const base=useBase();
+  const [games,setGames]=useState([]);
+  const [stats,setStats]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [err,setErr]=useState(null);
+  useEffect(()=>{
+    Promise.allSettled([
+      api(base,"/api/v1/games?status=upcoming&limit=6"),
+      api(base,"/api/v1/predictions/accuracy/stats"),
+    ]).then(([g,s])=>{
+      if(g.status==="fulfilled")setGames(g.value.games||[]);
+      else setErr(g.reason?.message||"Failed to load");
+      if(s.status==="fulfilled")setStats(s.value);
+      setLoading(false);
+    });
+  },[base]);
+  return(
+    <div style={{maxWidth:1200,margin:"0 auto",padding:"36px 20px"}}>
+      <div style={{textAlign:"center",marginBottom:44}}>
+        <span className="tag" style={{background:"rgba(245,158,11,.08)",color:"var(--gold)",border:"1px solid rgba(245,158,11,.2)",fontSize:9,letterSpacing:".15em",display:"inline-block",marginBottom:12}}>AI · SPORTS · ORACLE</span>
+        <h1 style={{fontFamily:"var(--font-display)",fontSize:"clamp(24px,6vw,52px)",fontWeight:900,letterSpacing:".06em",lineHeight:1.1,marginBottom:12}}>
+          The Story<br/><span style={{color:"var(--gold)"}}>Before It Happens</span>
+        </h1>
+        <p style={{fontFamily:"var(--font-body)",fontSize:17,color:"var(--text-dim)",maxWidth:420,margin:"0 auto 20px",fontStyle:"italic",lineHeight:1.7}}>
+          Groq AI reads live odds, injuries, fan sentiment &amp; form to predict outcomes before the whistle.
+        </p>
+        <div style={{display:"flex",gap:9,justifyContent:"center",flexWrap:"wrap"}}>
+          <button className="btn btn-gold" onClick={()=>setPage("games")} style={{padding:"11px 24px"}}>◈ View Games</button>
+          <button className="btn btn-ghost" onClick={()=>setPage("predictions")} style={{padding:"11px 24px"}}>Predictions</button>
+        </div>
+      </div>
+      {stats&&(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:40}} className="grid-4">
+          {[["Predictions",stats.total_predictions,"var(--text)"],["Correct",stats.correct,"var(--green)"],["Accuracy",`${(stats.accuracy_pct||0).toFixed(1)}%`,"var(--gold)"],["Pending",stats.pending,"var(--text-dim)"]].map(([l,v,c])=>(
+            <div key={l} className="card" style={{padding:"13px 16px",textAlign:"center"}}>
+              <div style={{fontFamily:"var(--font-display)",fontSize:22,fontWeight:700,color:c,letterSpacing:".04em"}}>{v}</div>
+              <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".08em",textTransform:"uppercase",marginTop:3}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+        <h2 style={{fontFamily:"var(--font-display)",fontSize:11,fontWeight:600,letterSpacing:".12em",color:"var(--text-dim)",textTransform:"uppercase"}}>Upcoming Games</h2>
+        <button className="btn btn-ghost" onClick={()=>setPage("games")} style={{fontSize:9,padding:"4px 10px"}}>All →</button>
+      </div>
+      {loading&&<Skels/>}
+      {err&&!loading&&<ErrBox msg={err}/>}
+      {!loading&&!err&&(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}} className="grid-2">
+          {games.map(g=><GameCard key={g.id} game={g} onSelect={setGame} compact/>)}
+          {games.length===0&&(
+            <div style={{gridColumn:"1/-1",textAlign:"center",padding:40,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontSize:10,lineHeight:1.9}}>
+              No upcoming games in database.<br/>
+              Run <code style={{color:"var(--gold)",background:"var(--surface2)",padding:"1px 6px",borderRadius:2}}>POST {useBase()}/api/v1/odds/ingest</code> to seed data.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Games({setGame}){
+  const base=useBase();
+  const [games,setGames]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [sport,setSport]=useState("");
+  const [status,setStatus]=useState("upcoming");
+  const [err,setErr]=useState(null);
+  useEffect(()=>{
+    setLoading(true);setErr(null);
+    const p=new URLSearchParams({limit:30,status});
+    if(sport)p.set("sport",sport);
+    api(base,`/api/v1/games?${p}`)
+      .then(d=>setGames(d.games||[]))
+      .catch(e=>{setErr(e.message);setGames([]);})
+      .finally(()=>setLoading(false));
+  },[sport,status,base]);
+  return(
+    <div style={{maxWidth:1200,margin:"0 auto",padding:"36px 20px"}}>
+      <h1 style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:700,letterSpacing:".08em",marginBottom:16}}>Games</h1>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:22}}>
+        {["upcoming","live","final"].map(s=>(
+          <button key={s} className={`btn btn-ghost ${status===s?"on":""}`} onClick={()=>setStatus(s)} style={{fontSize:9,padding:"4px 10px"}}>
+            {s==="live"?"● ":""}{s.toUpperCase()}
+          </button>
+        ))}
+        <div style={{width:1,height:24,background:"var(--border)",margin:"0 2px"}}/>
+        <button className={`btn btn-ghost ${!sport?"on":""}`} onClick={()=>setSport("")} style={{fontSize:9,padding:"4px 10px"}}>All</button>
+        {Object.entries(SL).map(([k,l])=>(
+          <button key={k} className={`btn btn-ghost ${sport===k?"on":""}`} onClick={()=>setSport(k)} style={{fontSize:9,padding:"4px 10px"}}>{SE[k]} {l}</button>
+        ))}
+      </div>
+      {loading&&<Skels h={145}/>}
+      {err&&!loading&&<ErrBox msg={err}/>}
+      {!loading&&!err&&(
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}} className="grid-2">
+          {games.map(g=><GameCard key={g.id} game={g} onSelect={setGame}/>)}
+          {games.length===0&&<div style={{gridColumn:"1/-1",textAlign:"center",padding:48,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontSize:10}}>No games match filters.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Predictions({setGame}){
+  const base=useBase();
+  const [preds,setPreds]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [f,setF]=useState("all");
+  const [err,setErr]=useState(null);
+  useEffect(()=>{
+    setLoading(true);setErr(null);
+    const p=new URLSearchParams({limit:30});
+    if(f==="correct")p.set("was_correct","true");
+    if(f==="wrong")p.set("was_correct","false");
+    api(base,`/api/v1/predictions?${p}`)
+      .then(d=>setPreds(d.predictions||[]))
+      .catch(e=>{setErr(e.message);setPreds([]);})
+      .finally(()=>setLoading(false));
+  },[f,base]);
+  return(
+    <div style={{maxWidth:940,margin:"0 auto",padding:"36px 20px"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:9,marginBottom:20}}>
+        <h1 style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:700,letterSpacing:".08em"}}>Predictions</h1>
+        <div style={{display:"flex",gap:4}}>
+          {[["all","All"],["correct","✓ Correct"],["wrong","✗ Wrong"]].map(([v,l])=>(
+            <button key={v} className={`btn btn-ghost ${f===v?"on":""}`} onClick={()=>setF(v)} style={{fontSize:9,padding:"4px 10px"}}>{l}</button>
+          ))}
+        </div>
+      </div>
+      {loading&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{[...Array(5)].map((_,i)=><div key={i} className="skeleton" style={{height:80}}/>)}</div>}
+      {err&&!loading&&<ErrBox msg={err}/>}
+      {!loading&&!err&&(
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {preds.map(p=>{
+            const ok=p.was_correct===true,bad=p.was_correct===false;
+            return(
+              <div key={p.id} className="card fade-in" style={{padding:"13px 17px",cursor:"pointer"}}
+                onClick={()=>p.game_id&&setGame({id:p.game_id,home_team:p.home_team,away_team:p.away_team,sport:p.sport,game_time:p.created_at,status:"upcoming"})}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:9}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",gap:4,alignItems:"center",marginBottom:4,flexWrap:"wrap"}}>
+                      <span className="tag" style={{background:"var(--surface2)",color:"var(--text-dim)"}}>{SE[p.sport]||"🏆"} {SL[p.sport]||p.sport}</span>
+                      {ok&&<span className="tag" style={{background:"rgba(34,197,94,.1)",color:"var(--green)"}}>✓ Correct</span>}
+                      {bad&&<span className="tag" style={{background:"rgba(239,68,68,.1)",color:"var(--red)"}}>✗ Wrong</span>}
+                      {p.was_correct===null&&<span className="tag" style={{background:"var(--surface2)",color:"var(--text-muted)"}}>Pending</span>}
+                    </div>
+                    <div style={{fontFamily:"var(--font-display)",fontSize:13,fontWeight:600,letterSpacing:".04em",marginBottom:3}}>{p.home_team} vs {p.away_team}</div>
+                    <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                      <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>Oracle picks</span>
+                      <span style={{fontFamily:"var(--font-display)",fontSize:11,color:"var(--gold)",letterSpacing:".04em"}}>{p.predicted_winner}</span>
+                      {p.actual_winner&&<><span style={{color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontSize:9}}>→</span><span style={{fontFamily:"var(--font-display)",fontSize:11,color:ok?"var(--green)":"var(--red)",letterSpacing:".04em"}}>{p.actual_winner}</span></>}
+                    </div>
+                    {p.narrative&&<p style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--text-dim)",fontStyle:"italic",marginTop:4,lineHeight:1.5}}>{p.narrative.slice(0,145)}…</p>}
+                  </div>
+                  {p.confidence&&<Ring value={p.confidence} size={48}/>}
+                </div>
+              </div>
+            );
+          })}
+          {preds.length===0&&<div style={{textAlign:"center",padding:48,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontSize:10}}>No predictions yet. Click any game and invoke the oracle.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Accuracy(){
+  const base=useBase();
+  const [stats,setStats]=useState(null);
+  const [lb,setLb]=useState([]);
+  const [loading,setLoading]=useState(true);
+  useEffect(()=>{
+    Promise.allSettled([
+      api(base,"/api/v1/predictions/accuracy/stats"),
+      api(base,"/api/v1/predictions/accuracy/leaderboard"),
+    ]).then(([s,l])=>{
+      if(s.status==="fulfilled")setStats(s.value);
+      if(l.status==="fulfilled")setLb(l.value||[]);
+      setLoading(false);
+    });
+  },[base]);
+  return(
+    <div style={{maxWidth:860,margin:"0 auto",padding:"36px 20px"}}>
+      <h1 style={{fontFamily:"var(--font-display)",fontSize:19,fontWeight:700,letterSpacing:".08em",marginBottom:24}}>Oracle Accuracy</h1>
+      {loading&&<Skels h={70} cols={4}/>}
+      {!loading&&<>
+        {stats&&(
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9,marginBottom:32}} className="grid-4">
+            {[["Total",stats.total_predictions,"var(--text)"],["Correct",stats.correct,"var(--green)"],["Wrong",stats.incorrect,"var(--red)"],["Accuracy",`${(stats.accuracy_pct||0).toFixed(1)}%`,"var(--gold)"]].map(([l,v,c])=>(
+              <div key={l} className="card" style={{padding:"14px 18px",textAlign:"center"}}>
+                <div style={{fontFamily:"var(--font-display)",fontSize:24,fontWeight:700,color:c,letterSpacing:".04em"}}>{v}</div>
+                <div style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",letterSpacing:".08em",textTransform:"uppercase",marginTop:3}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <h2 style={{fontFamily:"var(--font-display)",fontSize:10,fontWeight:600,letterSpacing:".12em",color:"var(--text-dim)",textTransform:"uppercase",marginBottom:10}}>By Sport</h2>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {lb.map((row,i)=>{
+            const pct=row.accuracy_pct||0;
+            return(
+              <div key={row.sport} className="card fade-delay" style={{padding:"13px 17px",animationDelay:`${i*.06}s`}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)",minWidth:16}}>#{i+1}</span>
+                    <span style={{fontSize:13}}>{SE[row.sport]||"🏆"}</span>
+                    <span style={{fontFamily:"var(--font-display)",fontSize:12,fontWeight:600,letterSpacing:".06em"}}>{SL[row.sport]||row.sport}</span>
+                  </div>
+                  <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                    <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>{row.total} games</span>
+                    <span style={{fontFamily:"var(--font-display)",fontSize:16,fontWeight:700,letterSpacing:".04em",color:pct>=60?"var(--gold)":"var(--text-dim)"}}>{pct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div style={{height:2,background:"var(--surface3)",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${pct}%`,background:pct>=60?"var(--gold)":"var(--text-muted)",borderRadius:2,transition:"width 1s ease"}}/>
+                </div>
+                <div style={{display:"flex",gap:10,marginTop:6}}>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--green)"}}>✓ {row.correct}</span>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--red)"}}>✗ {row.incorrect}</span>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:9,color:"var(--text-muted)"}}>⏳ {row.pending}</span>
+                </div>
+              </div>
+            );
+          })}
+          {lb.length===0&&<div style={{textAlign:"center",padding:48,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontSize:10}}>No accuracy data yet.</div>}
+        </div>
+      </>}
+    </div>
+  );
+}
+
+function App(){
+  const stored=(()=>{try{return localStorage.getItem("oraclex_api")||"http://localhost:8000";}catch{return "http://localhost:8000";}})();
+  const [base,setBaseRaw]=useState(stored);
+  const [page,setPage]=useState("dashboard");
+  const [game,setGame]=useState(null);
+  const [health,setHealth]=useState(null);
+  const setBase=u=>{setBaseRaw(u);try{localStorage.setItem("oraclex_api",u);}catch{}};
+  useEffect(()=>{api(base,"/health").then(setHealth).catch(()=>setHealth(null));},[base]);
+  return(
+    <ApiCtx.Provider value={base}>
+      <div className="orb" style={{width:440,height:440,background:"rgba(245,158,11,.05)",top:"8%",left:"56%"}}/>
+      <div className="orb" style={{width:260,height:260,background:"rgba(59,130,246,.04)",top:"48%",left:"3%",animationDelay:"4s"}}/>
+      <AppNav page={page} setPage={setPage} health={health}/>
+      <ConfigBar base={base} setBase={setBase}/>
+      <div style={{position:"relative",zIndex:1}}>
+        {page==="dashboard"&&<Dashboard setPage={setPage} setGame={setGame}/>}
+        {page==="games"&&<Games setGame={setGame}/>}
+        {page==="predictions"&&<Predictions setGame={setGame}/>}
+        {page==="accuracy"&&<Accuracy/>}
+      </div>
+      <footer style={{borderTop:"1px solid var(--border)",padding:"18px 20px",textAlign:"center",maxWidth:1200,margin:"36px auto 0"}}>
+        <div style={{fontFamily:"var(--font-display)",fontSize:9,color:"var(--text-muted)",letterSpacing:".12em",textTransform:"uppercase"}}>
+          Oracle<span style={{color:"var(--gold)"}}>X</span> — Entertainment only · Not financial advice · Gamble responsibly
+        </div>
+      </footer>
+      {game&&<PredModal game={game} onClose={()=>setGame(null)}/>}
+    </ApiCtx.Provider>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
